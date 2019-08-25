@@ -46,7 +46,7 @@ router.get('/create', passport.csrfProtection, (req, res) => {
         data.list = Number(data.list.split(':').shift());
     }
 
-    settings.list(['defaultFrom', 'defaultAddress', 'defaultSubject'], (err, configItems) => {
+    settings.list(['defaultFrom', 'defaultAddress', 'defaultSubject', 'defaultUnsubscribe'], (err, configItems) => {
         if (err) {
             req.flash('danger', err.message || err);
             return res.redirect('/');
@@ -93,6 +93,7 @@ router.get('/create', passport.csrfProtection, (req, res) => {
                 data.address = data.address || configItems.defaultAddress;
                 data.replyTo = data.replyTo || '';
                 data.subject = data.subject || configItems.defaultSubject;
+                data.unsubscribe = data.unsubscribe || configItems.defaultUnsubscribe;
 
                 let view;
                 switch (req.query.type) {
@@ -122,6 +123,19 @@ router.post('/create', passport.parseForm, passport.csrfProtection, (req, res) =
             '/campaigns/edit/' + id :
             '/campaigns/edit/' + id + '?tab=template'
         );
+    });
+});
+
+router.post('/duplicate', passport.parseForm, passport.csrfProtection, (req, res) => {
+    campaigns.duplicate(req.body.id, (err, duplicated) => {
+        if (err) {
+            req.flash('danger', err && err.message || err);
+        } else if (duplicated) {
+            req.flash('success', _('Campaign duplicated'));
+        } else {
+            req.flash('info', _('Could not duplicate specified campaign'));
+        }
+        return res.redirect('/campaigns/edit/' + duplicated);
     });
 });
 
@@ -545,7 +559,7 @@ router.post('/clicked/ajax/:id/:linkId', (req, res) => {
             let campaignCid = campaign.cid;
             let listCid = list.cid;
 
-            let columns = ['#', 'email', 'first_name', 'last_name', 'campaign_tracker__' + campaign.id + '`.`created', 'count'];
+            let columns = ['#', 'email', 'first_name', 'last_name', 'campaign_tracker__' + campaign.id + '.created', 'count'];
             campaigns.filterClickedSubscribers(campaign, linkId, req.body, columns, (err, data, total, filteredTotal) => {
                 if (err) {
                     return res.json({
@@ -634,7 +648,7 @@ router.post('/status/ajax/:id/:status', (req, res) => {
             let campaignCid = campaign.cid;
             let listCid = list.cid;
 
-            let columns = ['#', 'email', 'first_name', 'last_name', 'campaign__' + campaign.id + '`.`updated'];
+            let columns = ['#', 'email', 'first_name', 'last_name', 'campaign__' + campaign.id + '.updated'];
             campaigns.filterStatusSubscribers(campaign, status, req.body, columns, (err, data, total, filteredTotal) => {
                 if (err) {
                     return res.json({
@@ -683,7 +697,7 @@ router.post('/clicked/ajax/:id/:linkId', (req, res) => {
             let campaignCid = campaign.cid;
             let listCid = list.cid;
 
-            let columns = ['#', 'email', 'first_name', 'last_name', 'campaign_tracker__' + campaign.id + '`.`created', 'count'];
+            let columns = ['#', 'email', 'first_name', 'last_name', 'campaign_tracker__' + campaign.id + '.created', 'count'];
             campaigns.filterClickedSubscribers(campaign, linkId, req.body, columns, (err, data, total, filteredTotal) => {
                 if (err) {
                     return res.json({

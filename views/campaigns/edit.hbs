@@ -17,6 +17,11 @@
     <input type="hidden" name="id" value="{{id}}" />
 </form>
 
+<form method="post" class="duplicate-form" id="campaigns-duplicate" action="/campaigns/duplicate">
+    <input type="hidden" name="_csrf" value="{{csrfToken}}">
+    <input type="hidden" name="id" value="{{id}}" />
+</form>
+
 {{#each attachments}}
     <form method="post" id="attachment-download-{{id}}" action="/campaigns/attachment/download">
         <input type="hidden" name="_csrf" value="{{../csrfToken}}">
@@ -117,11 +122,25 @@
                             <input type="text" class="form-control" name="subject" id="subject" value="{{subject}}" placeholder="{{#translate}}Keep it relevant and non-spammy{{/translate}}" required>
                         </div>
                     </div>
+                    <div class="form-group">
+                        <label for="unsubscribe" class="col-sm-2 control-label">{{#translate}}Custom unsubscribe (URL){{/translate}}</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" name="unsubscribe" id="unsubscribe" value="{{unsubscribe}}" placeholder="{{#translate}}Set a custom unsubscribe url{{/translate}}">
+                        </div>
+                    </div>
 
                     <div class="col-sm-offset-2">
                         <div class="checkbox">
                             <label>
-                                <input type="checkbox" name="tracking-disabled" value="1" {{#if trackingDisabled}} checked {{/if}}> {{#translate}}Disable clicked/opened tracking{{/translate}}
+                                <input type="checkbox" name="open-tracking-disabled" value="1" {{#if openTrackingDisabled}} checked {{/if}}> {{#translate}}Disable opened tracking{{/translate}}
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="col-sm-offset-2">
+                        <div class="checkbox">
+                            <label>
+                                <input type="checkbox" name="click-tracking-disabled" value="1" {{#if clickTrackingDisabled}} checked {{/if}}> {{#translate}}Disable clicked tracking{{/translate}}
                             </label>
                         </div>
                     </div>
@@ -226,6 +245,7 @@
         <div class="form-group">
             <div class="col-sm-offset-2 col-sm-10">
                 <div class="pull-right">
+                    <button type="submit" form="campaigns-duplicate" class="btn btn-default"> {{#translate}}Duplicate{{/translate}}</button>
                     <button type="submit" form="campaigns-delete" class="btn btn-danger"><i class="glyphicon glyphicon-remove"></i> {{#translate}}Delete Campaign{{/translate}}</button>
                 </div>
                 <button type="submit" class="btn btn-primary"><i class="glyphicon glyphicon-ok"></i> {{#translate}}Update{{/translate}}</button>

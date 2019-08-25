@@ -34,7 +34,36 @@ CREATE TABLE `campaign` (
   KEY `status_index` (`status`),
   KEY `subscription_index` (`subscription`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE `campaign__1` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `list` int(11) unsigned NOT NULL,
+  `segment` int(11) unsigned NOT NULL,
+  `subscription` int(11) unsigned NOT NULL,
+  `status` tinyint(4) unsigned NOT NULL DEFAULT '0',
+  `response` varchar(255) DEFAULT NULL,
+  `response_id` varchar(255) CHARACTER SET ascii DEFAULT NULL,
+  `updated` timestamp NULL DEFAULT NULL,
+  `created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `list` (`list`,`segment`,`subscription`),
+  KEY `created` (`created`),
+  KEY `response_id` (`response_id`),
+  KEY `status_index` (`status`),
+  KEY `subscription_index` (`subscription`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 CREATE TABLE `campaign_tracker` (
+  `list` int(11) unsigned NOT NULL,
+  `subscriber` int(11) unsigned NOT NULL,
+  `link` int(11) NOT NULL,
+  `ip` varchar(100) CHARACTER SET ascii DEFAULT NULL,
+  `device_type` varchar(50) DEFAULT NULL,
+  `country` varchar(2) CHARACTER SET ascii DEFAULT NULL,
+  `count` int(11) unsigned NOT NULL DEFAULT '1',
+  `created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`list`,`subscriber`,`link`),
+  KEY `created_index` (`created`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE `campaign_tracker__1` (
   `list` int(11) unsigned NOT NULL,
   `subscriber` int(11) unsigned NOT NULL,
   `link` int(11) NOT NULL,
@@ -69,7 +98,6 @@ CREATE TABLE `campaigns` (
   `html_prepared` longtext,
   `text` longtext,
   `status` tinyint(4) unsigned NOT NULL DEFAULT '1',
-  `tracking_disabled` tinyint(4) unsigned NOT NULL DEFAULT '0',
   `scheduled` timestamp NULL DEFAULT NULL,
   `status_change` timestamp NULL DEFAULT NULL,
   `delivered` int(11) unsigned NOT NULL DEFAULT '0',
@@ -80,6 +108,8 @@ CREATE TABLE `campaigns` (
   `bounced` int(1) unsigned NOT NULL DEFAULT '0',
   `complained` int(1) unsigned NOT NULL DEFAULT '0',
   `created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `open_tracking_disabled` tinyint(4) unsigned NOT NULL DEFAULT '0',
+  `click_tracking_disabled` tinyint(4) unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   UNIQUE KEY `cid` (`cid`),
   KEY `name` (`name`(191)),
@@ -88,13 +118,14 @@ CREATE TABLE `campaigns` (
   KEY `type_index` (`type`),
   KEY `parent_index` (`parent`),
   KEY `check_index` (`last_check`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4;
+INSERT INTO `campaigns` (`id`, `cid`, `type`, `parent`, `name`, `description`, `list`, `segment`, `template`, `source_url`, `editor_name`, `editor_data`, `last_check`, `check_status`, `from`, `address`, `reply_to`, `subject`, `html`, `html_prepared`, `text`, `status`, `scheduled`, `status_change`, `delivered`, `blacklisted`, `opened`, `clicks`, `unsubscribed`, `bounced`, `complained`, `created`, `open_tracking_disabled`, `click_tracking_disabled`) VALUES (1,'BkwHWgCWb',1,NULL,'Merge Tags','',1,0,0,'','codeeditor',NULL,NULL,NULL,'My Awesome Company','admin@example.com','','Test message','<style>dt { margin-top: 10px; }</style>\r\n<dl>\r\n    <dt>LINK_UNSUBSCRIBE</dt>\r\n    <dd id=\"LINK_UNSUBSCRIBE\">[LINK_UNSUBSCRIBE]</dd>\r\n    <dt>LINK_PREFERENCES</dt>\r\n    <dd id=\"LINK_PREFERENCES\">[LINK_PREFERENCES]</dd>\r\n    <dt>LINK_BROWSER</dt>\r\n    <dd id=\"LINK_BROWSER\">[LINK_BROWSER]</dd>\r\n    <dt>EMAIL</dt>\r\n    <dd id=\"EMAIL\">[EMAIL]</dd>\r\n    <dt>FIRST_NAME</dt>\r\n    <dd id=\"FIRST_NAME\">[FIRST_NAME]</dd>\r\n    <dt>LAST_NAME</dt>\r\n    <dd id=\"LAST_NAME\">[LAST_NAME]</dd>\r\n    <dt>FULL_NAME</dt>\r\n    <dd id=\"FULL_NAME\">[FULL_NAME]</dd>\r\n    <dt>SUBSCRIPTION_ID</dt>\r\n    <dd id=\"SUBSCRIPTION_ID\">[SUBSCRIPTION_ID]</dd>\r\n    <dt>LIST_ID</dt>\r\n    <dd id=\"LIST_ID\">[LIST_ID]</dd>\r\n    <dt>CAMPAIGN_ID</dt>\r\n    <dd id=\"CAMPAIGN_ID\">[CAMPAIGN_ID]</dd>\r\n    <dt>MERGE_TEXT</dt>\r\n    <dd id=\"MERGE_TEXT\">[MERGE_TEXT]</dd>\r\n    <dt>MERGE_NUMBER</dt>\r\n    <dd id=\"MERGE_NUMBER\">[MERGE_NUMBER]</dd>\r\n    <dt>MERGE_WEBSITE</dt>\r\n    <dd id=\"MERGE_WEBSITE\">[MERGE_WEBSITE]</dd>\r\n    <dt>MERGE_GPG_PUBLIC_KEY</dt>\r\n    <dd id=\"MERGE_GPG_PUBLIC_KEY\">[MERGE_GPG_PUBLIC_KEY/GPG Fallback Text]</dd>\r\n    <dt>MERGE_MULTILINE_TEXT</dt>\r\n    <dd id=\"MERGE_MULTILINE_TEXT\">[MERGE_MULTILINE_TEXT]</dd>\r\n    <dt>MERGE_JSON</dt>\r\n    <dd id=\"MERGE_JSON\">[MERGE_JSON]</dd>\r\n    <dt>MERGE_DATE_MMDDYYYY</dt>\r\n    <dd id=\"MERGE_DATE_MMDDYY\">[MERGE_DATE_MMDDYYYY]</dd>\r\n    <dt>MERGE_DATE_DDMMYYYY</dt>\r\n    <dd id=\"MERGE_DATE_DDMMYY\">[MERGE_DATE_DDMMYYYY]</dd>\r\n    <dt>MERGE_BIRTHDAY_MMDD</dt>\r\n    <dd id=\"MERGE_BIRTHDAY_MMDD\">[MERGE_BIRTHDAY_MMDD]</dd>\r\n    <dt>MERGE_BIRTHDAY_DDMM</dt>\r\n    <dd id=\"MERGE_BIRTHDAY_DDMM\">[MERGE_BIRTHDAY_DDMM]</dd>\r\n    <dt>MERGE_DROP_DOWNS</dt>\r\n    <dd id=\"MERGE_DROP_DOWNS\">[MERGE_DROP_DOWNS]</dd>\r\n    <dt>MERGE_CHECKBOXES</dt>\r\n    <dd id=\"MERGE_CHECKBOXES\">[MERGE_CHECKBOXES]</dd>\r\n</dl>','<!doctype html><html><head>\n<meta charset=\"utf-8\"></head><body><dl>\n    <dt style=\"margin-top: 10px;\">LINK_UNSUBSCRIBE</dt>\n    <dd id=\"LINK_UNSUBSCRIBE\">[LINK_UNSUBSCRIBE]</dd>\n    <dt style=\"margin-top: 10px;\">LINK_PREFERENCES</dt>\n    <dd id=\"LINK_PREFERENCES\">[LINK_PREFERENCES]</dd>\n    <dt style=\"margin-top: 10px;\">LINK_BROWSER</dt>\n    <dd id=\"LINK_BROWSER\">[LINK_BROWSER]</dd>\n    <dt style=\"margin-top: 10px;\">EMAIL</dt>\n    <dd id=\"EMAIL\">[EMAIL]</dd>\n    <dt style=\"margin-top: 10px;\">FIRST_NAME</dt>\n    <dd id=\"FIRST_NAME\">[FIRST_NAME]</dd>\n    <dt style=\"margin-top: 10px;\">LAST_NAME</dt>\n    <dd id=\"LAST_NAME\">[LAST_NAME]</dd>\n    <dt style=\"margin-top: 10px;\">FULL_NAME</dt>\n    <dd id=\"FULL_NAME\">[FULL_NAME]</dd>\n    <dt style=\"margin-top: 10px;\">SUBSCRIPTION_ID</dt>\n    <dd id=\"SUBSCRIPTION_ID\">[SUBSCRIPTION_ID]</dd>\n    <dt style=\"margin-top: 10px;\">LIST_ID</dt>\n    <dd id=\"LIST_ID\">[LIST_ID]</dd>\n    <dt style=\"margin-top: 10px;\">CAMPAIGN_ID</dt>\n    <dd id=\"CAMPAIGN_ID\">[CAMPAIGN_ID]</dd>\n    <dt style=\"margin-top: 10px;\">MERGE_TEXT</dt>\n    <dd id=\"MERGE_TEXT\">[MERGE_TEXT]</dd>\n    <dt style=\"margin-top: 10px;\">MERGE_NUMBER</dt>\n    <dd id=\"MERGE_NUMBER\">[MERGE_NUMBER]</dd>\n    <dt style=\"margin-top: 10px;\">MERGE_WEBSITE</dt>\n    <dd id=\"MERGE_WEBSITE\">[MERGE_WEBSITE]</dd>\n    <dt style=\"margin-top: 10px;\">MERGE_GPG_PUBLIC_KEY</dt>\n    <dd id=\"MERGE_GPG_PUBLIC_KEY\">[MERGE_GPG_PUBLIC_KEY/GPG Fallback Text]</dd>\n    <dt style=\"margin-top: 10px;\">MERGE_MULTILINE_TEXT</dt>\n    <dd id=\"MERGE_MULTILINE_TEXT\">[MERGE_MULTILINE_TEXT]</dd>\n    <dt style=\"margin-top: 10px;\">MERGE_JSON</dt>\n    <dd id=\"MERGE_JSON\">[MERGE_JSON]</dd>\n    <dt style=\"margin-top: 10px;\">MERGE_DATE_MMDDYYYY</dt>\n    <dd id=\"MERGE_DATE_MMDDYY\">[MERGE_DATE_MMDDYYYY]</dd>\n    <dt style=\"margin-top: 10px;\">MERGE_DATE_DDMMYYYY</dt>\n    <dd id=\"MERGE_DATE_DDMMYY\">[MERGE_DATE_DDMMYYYY]</dd>\n    <dt style=\"margin-top: 10px;\">MERGE_BIRTHDAY_MMDD</dt>\n    <dd id=\"MERGE_BIRTHDAY_MMDD\">[MERGE_BIRTHDAY_MMDD]</dd>\n    <dt style=\"margin-top: 10px;\">MERGE_BIRTHDAY_DDMM</dt>\n    <dd id=\"MERGE_BIRTHDAY_DDMM\">[MERGE_BIRTHDAY_DDMM]</dd>\n    <dt style=\"margin-top: 10px;\">MERGE_DROP_DOWNS</dt>\n    <dd id=\"MERGE_DROP_DOWNS\">[MERGE_DROP_DOWNS]</dd>\n    <dt style=\"margin-top: 10px;\">MERGE_CHECKBOXES</dt>\n    <dd id=\"MERGE_CHECKBOXES\">[MERGE_CHECKBOXES]</dd>\n</dl></body></html>','',1,NOW(),NULL,0,0,0,0,0,0,0,NOW(),0,0);
 CREATE TABLE `confirmations` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `cid` varchar(255) CHARACTER SET ascii NOT NULL,
   `list` int(11) unsigned NOT NULL,
-  `email` varchar(255) NOT NULL,
-  `opt_in_ip` varchar(100) DEFAULT NULL,
+  `action` varchar(100) NOT NULL,
+  `ip` varchar(100) DEFAULT NULL,
   `data` text NOT NULL,
   `created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
@@ -118,7 +149,25 @@ CREATE TABLE `custom_fields` (
   UNIQUE KEY `list` (`list`,`column`),
   KEY `list_2` (`list`),
   CONSTRAINT `custom_fields_ibfk_1` FOREIGN KEY (`list`) REFERENCES `lists` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4;
+INSERT INTO `custom_fields` (`id`, `list`, `name`, `key`, `default_value`, `type`, `group`, `group_template`, `column`, `visible`, `created`) VALUES (1,1,'Text','MERGE_TEXT',NULL,'text',NULL,NULL,'custom_text_field_byiiqjrw',1,NOW());
+INSERT INTO `custom_fields` (`id`, `list`, `name`, `key`, `default_value`, `type`, `group`, `group_template`, `column`, `visible`, `created`) VALUES (2,1,'Number','MERGE_NUMBER',NULL,'number',NULL,NULL,'custom_number_field_r1dd91awb',1,NOW());
+INSERT INTO `custom_fields` (`id`, `list`, `name`, `key`, `default_value`, `type`, `group`, `group_template`, `column`, `visible`, `created`) VALUES (3,1,'Website','MERGE_WEBSITE',NULL,'website',NULL,NULL,'custom_website_field_rkq991cw',1,NOW());
+INSERT INTO `custom_fields` (`id`, `list`, `name`, `key`, `default_value`, `type`, `group`, `group_template`, `column`, `visible`, `created`) VALUES (4,1,'GPG Public Key','MERGE_GPG_PUBLIC_KEY',NULL,'gpg',NULL,NULL,'custom_gpg_public_key_ryvj51cz',1,NOW());
+INSERT INTO `custom_fields` (`id`, `list`, `name`, `key`, `default_value`, `type`, `group`, `group_template`, `column`, `visible`, `created`) VALUES (5,1,'Multiline Text','MERGE_MULTILINE_TEXT',NULL,'longtext',NULL,NULL,'custom_multiline_text_bjbfojawb',1,NOW());
+INSERT INTO `custom_fields` (`id`, `list`, `name`, `key`, `default_value`, `type`, `group`, `group_template`, `column`, `visible`, `created`) VALUES (6,1,'JSON','MERGE_JSON',NULL,'json',NULL,NULL,'custom_json_skqjkcb',1,NOW());
+INSERT INTO `custom_fields` (`id`, `list`, `name`, `key`, `default_value`, `type`, `group`, `group_template`, `column`, `visible`, `created`) VALUES (7,1,'Date (MM/DD/YYYY)','MERGE_DATE_MMDDYYYY',NULL,'date-us',NULL,NULL,'custom_date_mmddyy_rjkeojrzz',1,NOW());
+INSERT INTO `custom_fields` (`id`, `list`, `name`, `key`, `default_value`, `type`, `group`, `group_template`, `column`, `visible`, `created`) VALUES (8,1,'Date (DD/MM/YYYY)','MERGE_DATE_DDMMYYYY',NULL,'date-eur',NULL,NULL,'custom_date_ddmmyy_ryedsk0wz',1,NOW());
+INSERT INTO `custom_fields` (`id`, `list`, `name`, `key`, `default_value`, `type`, `group`, `group_template`, `column`, `visible`, `created`) VALUES (9,1,'Birthday (MM/DD)','MERGE_BIRTHDAY_MMDD',NULL,'birthday-us',NULL,NULL,'custom_birthday_mmdd_h18coj0zz',1,NOW());
+INSERT INTO `custom_fields` (`id`, `list`, `name`, `key`, `default_value`, `type`, `group`, `group_template`, `column`, `visible`, `created`) VALUES (10,1,'Birthday (DD/MM)','MERGE_BIRTHDAY_DDMM',NULL,'birthday-eur',NULL,NULL,'custom_birthday_ddmm_r1g3s1czz',1,NOW());
+INSERT INTO `custom_fields` (`id`, `list`, `name`, `key`, `default_value`, `type`, `group`, `group_template`, `column`, `visible`, `created`) VALUES (11,1,'Drop Downs','MERGE_DROP_DOWNS',NULL,'dropdown',NULL,NULL,NULL,1,NOW());
+INSERT INTO `custom_fields` (`id`, `list`, `name`, `key`, `default_value`, `type`, `group`, `group_template`, `column`, `visible`, `created`) VALUES (12,1,'Drop Down Opt 1','MERGE_DROP_DOWN_OPT_1',NULL,'option',11,NULL,'custom_dd_option_1_b1wwn1rzw',1,NOW());
+INSERT INTO `custom_fields` (`id`, `list`, `name`, `key`, `default_value`, `type`, `group`, `group_template`, `column`, `visible`, `created`) VALUES (13,1,'Drop Down Opt 2','MERGE_DROP_DOWN_OPT_2',NULL,'option',11,NULL,'custom_drop_down_opt_2_hkzd2jcww',1,NOW());
+INSERT INTO `custom_fields` (`id`, `list`, `name`, `key`, `default_value`, `type`, `group`, `group_template`, `column`, `visible`, `created`) VALUES (14,1,'Drop Down Opt 3','MERGE_DROP_DOWN_OPT_3',NULL,'option',11,NULL,'custom_drop_down_opt_3_rjghnyrz',1,NOW());
+INSERT INTO `custom_fields` (`id`, `list`, `name`, `key`, `default_value`, `type`, `group`, `group_template`, `column`, `visible`, `created`) VALUES (15,1,'Checkboxes','MERGE_CHECKBOXES',NULL,'checkbox',NULL,NULL,NULL,1,NOW());
+INSERT INTO `custom_fields` (`id`, `list`, `name`, `key`, `default_value`, `type`, `group`, `group_template`, `column`, `visible`, `created`) VALUES (16,1,'Checkbox Option 1','MERGE_CHECKBOX_OPTION_1',NULL,'option',15,NULL,'custom_checkbox_option_1_by_l0jcwz',1,NOW());
+INSERT INTO `custom_fields` (`id`, `list`, `name`, `key`, `default_value`, `type`, `group`, `group_template`, `column`, `visible`, `created`) VALUES (17,1,'Checkbox Option 2','MERGE_CHECKBOX_OPTION_2',NULL,'option',15,NULL,'custom_checkbox_option_2_sjdprj0zz',1,NOW());
+INSERT INTO `custom_fields` (`id`, `list`, `name`, `key`, `default_value`, `type`, `group`, `group_template`, `column`, `visible`, `created`) VALUES (18,1,'Checkbox Option 3','MERGE_CHECKBOX_OPTION_3',NULL,'option',15,NULL,'custom_checkbox_option_3_bk2drjabz',1,NOW());
 CREATE TABLE `custom_forms` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `list` int(11) unsigned NOT NULL,
@@ -193,11 +242,17 @@ CREATE TABLE `lists` (
   `subscribers` int(11) unsigned DEFAULT '0',
   `created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `public_subscribe` tinyint(1) unsigned NOT NULL DEFAULT '1',
+  `unsubscription_mode` int(11) unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   UNIQUE KEY `cid` (`cid`),
   KEY `name` (`name`(191))
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4;
-INSERT INTO `lists` (`id`, `cid`, `default_form`, `name`, `description`, `subscribers`, `created`, `public_subscribe`) VALUES (1,'Hkj1vCoJb',NULL,'01 Testlist - Public Subscribe','',0,NOW(),1);
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4;
+INSERT INTO `lists` (`id`, `cid`, `default_form`, `name`, `description`, `subscribers`, `created`, `public_subscribe`, `unsubscription_mode`) VALUES (1,'Hkj1vCoJb',0,'#1 (one-step, no form)','',1,NOW(),1,0);
+INSERT INTO `lists` (`id`, `cid`, `default_form`, `name`, `description`, `subscribers`, `created`, `public_subscribe`, `unsubscription_mode`) VALUES (2,'SktV4HDZ-',NULL,'#2 (one-step, with form)','',0,NOW(),1,1);
+INSERT INTO `lists` (`id`, `cid`, `default_form`, `name`, `description`, `subscribers`, `created`, `public_subscribe`, `unsubscription_mode`) VALUES (3,'BkdvNBw-W',NULL,'#3 (two-step, no form)','',0,NOW(),1,2);
+INSERT INTO `lists` (`id`, `cid`, `default_form`, `name`, `description`, `subscribers`, `created`, `public_subscribe`, `unsubscription_mode`) VALUES (4,'rJMKVrDZ-',NULL,'#4 (two-step, with form)','',0,NOW(),1,3);
+INSERT INTO `lists` (`id`, `cid`, `default_form`, `name`, `description`, `subscribers`, `created`, `public_subscribe`, `unsubscription_mode`) VALUES (5,'SJgoNSw-W',NULL,'#5 (manual unsubscribe)','',0,NOW(),1,4);
+INSERT INTO `lists` (`id`, `cid`, `default_form`, `name`, `description`, `subscribers`, `created`, `public_subscribe`, `unsubscription_mode`) VALUES (6,'HyveEPvWW',NULL,'#6 (non-public)','',0,NOW(),0,0);
 CREATE TABLE `queued` (
   `campaign` int(11) unsigned NOT NULL,
   `list` int(11) unsigned NOT NULL,
@@ -269,24 +324,24 @@ CREATE TABLE `settings` (
   `value` text NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `key` (`key`)
-) ENGINE=InnoDB AUTO_INCREMENT=112 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=148 DEFAULT CHARSET=utf8mb4;
 INSERT INTO `settings` (`id`, `key`, `value`) VALUES (1,'smtp_hostname','localhost');
 INSERT INTO `settings` (`id`, `key`, `value`) VALUES (2,'smtp_port','5587');
 INSERT INTO `settings` (`id`, `key`, `value`) VALUES (3,'smtp_encryption','NONE');
 INSERT INTO `settings` (`id`, `key`, `value`) VALUES (4,'smtp_user','testuser');
 INSERT INTO `settings` (`id`, `key`, `value`) VALUES (5,'smtp_pass','testpass');
 INSERT INTO `settings` (`id`, `key`, `value`) VALUES (6,'service_url','http://localhost:3000/');
-INSERT INTO `settings` (`id`, `key`, `value`) VALUES (7,'admin_email','admin@example.com');
+INSERT INTO `settings` (`id`, `key`, `value`) VALUES (7,'admin_email','keep.admin@mailtrain.org');
 INSERT INTO `settings` (`id`, `key`, `value`) VALUES (8,'smtp_max_connections','5');
 INSERT INTO `settings` (`id`, `key`, `value`) VALUES (9,'smtp_max_messages','100');
 INSERT INTO `settings` (`id`, `key`, `value`) VALUES (10,'smtp_log','');
 INSERT INTO `settings` (`id`, `key`, `value`) VALUES (11,'default_sender','My Awesome Company');
 INSERT INTO `settings` (`id`, `key`, `value`) VALUES (12,'default_postaddress','1234 Main Street');
 INSERT INTO `settings` (`id`, `key`, `value`) VALUES (13,'default_from','My Awesome Company');
-INSERT INTO `settings` (`id`, `key`, `value`) VALUES (14,'default_address','admin@example.com');
+INSERT INTO `settings` (`id`, `key`, `value`) VALUES (14,'default_address','keep.admin@mailtrain.org');
 INSERT INTO `settings` (`id`, `key`, `value`) VALUES (15,'default_subject','Test message');
 INSERT INTO `settings` (`id`, `key`, `value`) VALUES (16,'default_homepage','https://mailtrain.org');
-INSERT INTO `settings` (`id`, `key`, `value`) VALUES (17,'db_schema_version','27');
+INSERT INTO `settings` (`id`, `key`, `value`) VALUES (17,'db_schema_version','29');
 INSERT INTO `settings` (`id`, `key`, `value`) VALUES (46,'ua_code','');
 INSERT INTO `settings` (`id`, `key`, `value`) VALUES (47,'shoutout','');
 INSERT INTO `settings` (`id`, `key`, `value`) VALUES (54,'mail_transport','smtp');
@@ -334,6 +389,163 @@ CREATE TABLE `subscription` (
   KEY `created` (`created`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 CREATE TABLE `subscription__1` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `cid` varchar(255) CHARACTER SET ascii NOT NULL,
+  `email` varchar(255) CHARACTER SET utf8 NOT NULL DEFAULT '',
+  `opt_in_ip` varchar(100) DEFAULT NULL,
+  `opt_in_country` varchar(2) DEFAULT NULL,
+  `tz` varchar(100) CHARACTER SET ascii DEFAULT NULL,
+  `imported` int(11) unsigned DEFAULT NULL,
+  `status` tinyint(4) unsigned NOT NULL DEFAULT '1',
+  `is_test` tinyint(4) unsigned NOT NULL DEFAULT '0',
+  `status_change` timestamp NULL DEFAULT NULL,
+  `latest_open` timestamp NULL DEFAULT NULL,
+  `latest_click` timestamp NULL DEFAULT NULL,
+  `created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `first_name` varchar(255) DEFAULT NULL,
+  `last_name` varchar(255) DEFAULT NULL,
+  `custom_text_field_byiiqjrw` varchar(255) DEFAULT NULL,
+  `custom_number_field_r1dd91awb` int(11) DEFAULT NULL,
+  `custom_website_field_rkq991cw` varchar(255) DEFAULT NULL,
+  `custom_gpg_public_key_ryvj51cz` text,
+  `custom_multiline_text_bjbfojawb` text,
+  `custom_json_skqjkcb` text,
+  `custom_date_mmddyy_rjkeojrzz` timestamp NULL DEFAULT NULL,
+  `custom_date_ddmmyy_ryedsk0wz` timestamp NULL DEFAULT NULL,
+  `custom_birthday_mmdd_h18coj0zz` timestamp NULL DEFAULT NULL,
+  `custom_birthday_ddmm_r1g3s1czz` timestamp NULL DEFAULT NULL,
+  `custom_dd_option_1_b1wwn1rzw` tinyint(4) unsigned NOT NULL DEFAULT '0',
+  `custom_drop_down_opt_2_hkzd2jcww` tinyint(4) unsigned NOT NULL DEFAULT '0',
+  `custom_drop_down_opt_3_rjghnyrz` tinyint(4) unsigned NOT NULL DEFAULT '0',
+  `custom_checkbox_option_1_by_l0jcwz` tinyint(4) unsigned NOT NULL DEFAULT '0',
+  `custom_checkbox_option_2_sjdprj0zz` tinyint(4) unsigned NOT NULL DEFAULT '0',
+  `custom_checkbox_option_3_bk2drjabz` tinyint(4) unsigned NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `email` (`email`),
+  UNIQUE KEY `cid` (`cid`),
+  KEY `status` (`status`),
+  KEY `first_name` (`first_name`(191)),
+  KEY `last_name` (`last_name`(191)),
+  KEY `subscriber_tz` (`tz`),
+  KEY `is_test` (`is_test`),
+  KEY `latest_open` (`latest_open`),
+  KEY `latest_click` (`latest_click`),
+  KEY `created` (`created`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4;
+INSERT INTO `subscription__1` (`id`, `cid`, `email`, `opt_in_ip`, `opt_in_country`, `tz`, `imported`, `status`, `is_test`, `status_change`, `latest_open`, `latest_click`, `created`, `first_name`, `last_name`, `custom_text_field_byiiqjrw`, `custom_number_field_r1dd91awb`, `custom_website_field_rkq991cw`, `custom_gpg_public_key_ryvj51cz`, `custom_multiline_text_bjbfojawb`, `custom_json_skqjkcb`, `custom_date_mmddyy_rjkeojrzz`, `custom_date_ddmmyy_ryedsk0wz`, `custom_birthday_mmdd_h18coj0zz`, `custom_birthday_ddmm_r1g3s1czz`, `custom_dd_option_1_b1wwn1rzw`, `custom_drop_down_opt_2_hkzd2jcww`, `custom_drop_down_opt_3_rjghnyrz`, `custom_checkbox_option_1_by_l0jcwz`, `custom_checkbox_option_2_sjdprj0zz`, `custom_checkbox_option_3_bk2drjabz`) VALUES (1,'SJDW9J0Wb','keep.john.doe@mailtrain.org',NULL,NULL,'europe/zurich',NULL,1,1,NOW(),NOW(),NULL,NOW(),'John','Doe','Lorem Ipsum',42,'https://mailtrain.org','','Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.','',NOW(),NOW(),NOW(),NOW(),1,0,0,0,1,0);
+CREATE TABLE `subscription__2` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `cid` varchar(255) CHARACTER SET ascii NOT NULL,
+  `email` varchar(255) CHARACTER SET utf8 NOT NULL DEFAULT '',
+  `opt_in_ip` varchar(100) DEFAULT NULL,
+  `opt_in_country` varchar(2) DEFAULT NULL,
+  `tz` varchar(100) CHARACTER SET ascii DEFAULT NULL,
+  `imported` int(11) unsigned DEFAULT NULL,
+  `status` tinyint(4) unsigned NOT NULL DEFAULT '1',
+  `is_test` tinyint(4) unsigned NOT NULL DEFAULT '0',
+  `status_change` timestamp NULL DEFAULT NULL,
+  `latest_open` timestamp NULL DEFAULT NULL,
+  `latest_click` timestamp NULL DEFAULT NULL,
+  `created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `first_name` varchar(255) DEFAULT NULL,
+  `last_name` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `email` (`email`),
+  UNIQUE KEY `cid` (`cid`),
+  KEY `status` (`status`),
+  KEY `first_name` (`first_name`(191)),
+  KEY `last_name` (`last_name`(191)),
+  KEY `subscriber_tz` (`tz`),
+  KEY `is_test` (`is_test`),
+  KEY `latest_open` (`latest_open`),
+  KEY `latest_click` (`latest_click`),
+  KEY `created` (`created`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE `subscription__3` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `cid` varchar(255) CHARACTER SET ascii NOT NULL,
+  `email` varchar(255) CHARACTER SET utf8 NOT NULL DEFAULT '',
+  `opt_in_ip` varchar(100) DEFAULT NULL,
+  `opt_in_country` varchar(2) DEFAULT NULL,
+  `tz` varchar(100) CHARACTER SET ascii DEFAULT NULL,
+  `imported` int(11) unsigned DEFAULT NULL,
+  `status` tinyint(4) unsigned NOT NULL DEFAULT '1',
+  `is_test` tinyint(4) unsigned NOT NULL DEFAULT '0',
+  `status_change` timestamp NULL DEFAULT NULL,
+  `latest_open` timestamp NULL DEFAULT NULL,
+  `latest_click` timestamp NULL DEFAULT NULL,
+  `created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `first_name` varchar(255) DEFAULT NULL,
+  `last_name` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `email` (`email`),
+  UNIQUE KEY `cid` (`cid`),
+  KEY `status` (`status`),
+  KEY `first_name` (`first_name`(191)),
+  KEY `last_name` (`last_name`(191)),
+  KEY `subscriber_tz` (`tz`),
+  KEY `is_test` (`is_test`),
+  KEY `latest_open` (`latest_open`),
+  KEY `latest_click` (`latest_click`),
+  KEY `created` (`created`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE `subscription__4` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `cid` varchar(255) CHARACTER SET ascii NOT NULL,
+  `email` varchar(255) CHARACTER SET utf8 NOT NULL DEFAULT '',
+  `opt_in_ip` varchar(100) DEFAULT NULL,
+  `opt_in_country` varchar(2) DEFAULT NULL,
+  `tz` varchar(100) CHARACTER SET ascii DEFAULT NULL,
+  `imported` int(11) unsigned DEFAULT NULL,
+  `status` tinyint(4) unsigned NOT NULL DEFAULT '1',
+  `is_test` tinyint(4) unsigned NOT NULL DEFAULT '0',
+  `status_change` timestamp NULL DEFAULT NULL,
+  `latest_open` timestamp NULL DEFAULT NULL,
+  `latest_click` timestamp NULL DEFAULT NULL,
+  `created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `first_name` varchar(255) DEFAULT NULL,
+  `last_name` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `email` (`email`),
+  UNIQUE KEY `cid` (`cid`),
+  KEY `status` (`status`),
+  KEY `first_name` (`first_name`(191)),
+  KEY `last_name` (`last_name`(191)),
+  KEY `subscriber_tz` (`tz`),
+  KEY `is_test` (`is_test`),
+  KEY `latest_open` (`latest_open`),
+  KEY `latest_click` (`latest_click`),
+  KEY `created` (`created`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE `subscription__5` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `cid` varchar(255) CHARACTER SET ascii NOT NULL,
+  `email` varchar(255) CHARACTER SET utf8 NOT NULL DEFAULT '',
+  `opt_in_ip` varchar(100) DEFAULT NULL,
+  `opt_in_country` varchar(2) DEFAULT NULL,
+  `tz` varchar(100) CHARACTER SET ascii DEFAULT NULL,
+  `imported` int(11) unsigned DEFAULT NULL,
+  `status` tinyint(4) unsigned NOT NULL DEFAULT '1',
+  `is_test` tinyint(4) unsigned NOT NULL DEFAULT '0',
+  `status_change` timestamp NULL DEFAULT NULL,
+  `latest_open` timestamp NULL DEFAULT NULL,
+  `latest_click` timestamp NULL DEFAULT NULL,
+  `created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `first_name` varchar(255) DEFAULT NULL,
+  `last_name` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `email` (`email`),
+  UNIQUE KEY `cid` (`cid`),
+  KEY `status` (`status`),
+  KEY `first_name` (`first_name`(191)),
+  KEY `last_name` (`last_name`(191)),
+  KEY `subscriber_tz` (`tz`),
+  KEY `is_test` (`is_test`),
+  KEY `latest_open` (`latest_open`),
+  KEY `latest_click` (`latest_click`),
+  KEY `created` (`created`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE `subscription__6` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `cid` varchar(255) CHARACTER SET ascii NOT NULL,
   `email` varchar(255) CHARACTER SET utf8 NOT NULL DEFAULT '',
@@ -422,14 +634,14 @@ INSERT INTO `tzoffset` (`tz`, `offset`) VALUES ('africa/blantyre',120);
 INSERT INTO `tzoffset` (`tz`, `offset`) VALUES ('africa/brazzaville',60);
 INSERT INTO `tzoffset` (`tz`, `offset`) VALUES ('africa/bujumbura',120);
 INSERT INTO `tzoffset` (`tz`, `offset`) VALUES ('africa/cairo',120);
-INSERT INTO `tzoffset` (`tz`, `offset`) VALUES ('africa/casablanca',60);
+INSERT INTO `tzoffset` (`tz`, `offset`) VALUES ('africa/casablanca',0);
 INSERT INTO `tzoffset` (`tz`, `offset`) VALUES ('africa/ceuta',120);
 INSERT INTO `tzoffset` (`tz`, `offset`) VALUES ('africa/conakry',0);
 INSERT INTO `tzoffset` (`tz`, `offset`) VALUES ('africa/dakar',0);
 INSERT INTO `tzoffset` (`tz`, `offset`) VALUES ('africa/dar_es_salaam',180);
 INSERT INTO `tzoffset` (`tz`, `offset`) VALUES ('africa/djibouti',180);
 INSERT INTO `tzoffset` (`tz`, `offset`) VALUES ('africa/douala',60);
-INSERT INTO `tzoffset` (`tz`, `offset`) VALUES ('africa/el_aaiun',60);
+INSERT INTO `tzoffset` (`tz`, `offset`) VALUES ('africa/el_aaiun',0);
 INSERT INTO `tzoffset` (`tz`, `offset`) VALUES ('africa/freetown',0);
 INSERT INTO `tzoffset` (`tz`, `offset`) VALUES ('africa/gaborone',120);
 INSERT INTO `tzoffset` (`tz`, `offset`) VALUES ('africa/harare',120);
@@ -603,7 +815,7 @@ INSERT INTO `tzoffset` (`tz`, `offset`) VALUES ('america/rio_branco',-300);
 INSERT INTO `tzoffset` (`tz`, `offset`) VALUES ('america/rosario',-180);
 INSERT INTO `tzoffset` (`tz`, `offset`) VALUES ('america/santarem',-180);
 INSERT INTO `tzoffset` (`tz`, `offset`) VALUES ('america/santa_isabel',-420);
-INSERT INTO `tzoffset` (`tz`, `offset`) VALUES ('america/santiago',-180);
+INSERT INTO `tzoffset` (`tz`, `offset`) VALUES ('america/santiago',-240);
 INSERT INTO `tzoffset` (`tz`, `offset`) VALUES ('america/santo_domingo',-240);
 INSERT INTO `tzoffset` (`tz`, `offset`) VALUES ('america/sao_paulo',-180);
 INSERT INTO `tzoffset` (`tz`, `offset`) VALUES ('america/scoresbysund',0);
@@ -788,8 +1000,8 @@ INSERT INTO `tzoffset` (`tz`, `offset`) VALUES ('canada/pacific',-420);
 INSERT INTO `tzoffset` (`tz`, `offset`) VALUES ('canada/saskatchewan',-360);
 INSERT INTO `tzoffset` (`tz`, `offset`) VALUES ('canada/yukon',-420);
 INSERT INTO `tzoffset` (`tz`, `offset`) VALUES ('cet',120);
-INSERT INTO `tzoffset` (`tz`, `offset`) VALUES ('chile/continental',-180);
-INSERT INTO `tzoffset` (`tz`, `offset`) VALUES ('chile/easterisland',-300);
+INSERT INTO `tzoffset` (`tz`, `offset`) VALUES ('chile/continental',-240);
+INSERT INTO `tzoffset` (`tz`, `offset`) VALUES ('chile/easterisland',-360);
 INSERT INTO `tzoffset` (`tz`, `offset`) VALUES ('cst6cdt',-300);
 INSERT INTO `tzoffset` (`tz`, `offset`) VALUES ('cuba',-240);
 INSERT INTO `tzoffset` (`tz`, `offset`) VALUES ('eet',180);
@@ -936,7 +1148,7 @@ INSERT INTO `tzoffset` (`tz`, `offset`) VALUES ('pacific/auckland',720);
 INSERT INTO `tzoffset` (`tz`, `offset`) VALUES ('pacific/bougainville',660);
 INSERT INTO `tzoffset` (`tz`, `offset`) VALUES ('pacific/chatham',765);
 INSERT INTO `tzoffset` (`tz`, `offset`) VALUES ('pacific/chuuk',600);
-INSERT INTO `tzoffset` (`tz`, `offset`) VALUES ('pacific/easter',-300);
+INSERT INTO `tzoffset` (`tz`, `offset`) VALUES ('pacific/easter',-360);
 INSERT INTO `tzoffset` (`tz`, `offset`) VALUES ('pacific/efate',660);
 INSERT INTO `tzoffset` (`tz`, `offset`) VALUES ('pacific/enderbury',780);
 INSERT INTO `tzoffset` (`tz`, `offset`) VALUES ('pacific/fakaofo',780);
@@ -1017,7 +1229,7 @@ CREATE TABLE `users` (
   KEY `check_reset` (`username`(191),`reset_token`,`reset_expire`),
   KEY `token_index` (`access_token`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4;
-INSERT INTO `users` (`id`, `username`, `password`, `email`, `access_token`, `reset_token`, `reset_expire`, `created`) VALUES (1,'admin','$2a$10$mzKU71G62evnGB2PvQA4k..Wf9jASk.c7a8zRMHh6qQVjYJ2r/g/K','admin@example.com',NULL,NULL,NULL,NOW());
+INSERT INTO `users` (`id`, `username`, `password`, `email`, `access_token`, `reset_token`, `reset_expire`, `created`) VALUES (1,'admin','$2a$10$mzKU71G62evnGB2PvQA4k..Wf9jASk.c7a8zRMHh6qQVjYJ2r/g/K','keep.admin@mailtrain.org','7833d148e22c85474c314f43ae4591a7c9adec26',NULL,NULL,NOW());
 
 SET UNIQUE_CHECKS=1;
 SET FOREIGN_KEY_CHECKS=1;

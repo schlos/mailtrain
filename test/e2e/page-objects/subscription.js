@@ -1,84 +1,199 @@
 'use strict';
 
-const config = require('../helpers/config');
-const page = require('./page');
+const config = require('../lib/config');
+const web = require('../lib/web');
+const mail = require('../lib/mail');
+const expect = require('chai').expect;
 
-const web = {
-    enterEmail(value) {
-        this.element('emailInput').clear();
-        return this.element('emailInput').sendKeys(value);
+const fieldHelpers = list => ({
+    async fillFields(subscription) {
+        if (subscription.EMAIL && this.url === `/subscription/${list.cid}`) {
+            await this.setValue('emailInput', subscription.EMAIL);
+        }
+
+        if (subscription.FIRST_NAME) {
+            await this.setValue('firstNameInput', subscription.FIRST_NAME);
+        }
+
+        if (subscription.LAST_NAME) {
+            await this.setValue('lastNameInput', subscription.LAST_NAME);
+        }
+
+        for (const field of list.customFields) {
+            if (field.key in subscription) {
+                await this.setValue(`[name="${field.column}"]`, subscription[field.key]);
+            }
+        }
+    },
+
+    async assertFields(subscription) {
+        if (subscription.EMAIL) {
+            expect(await this.getValue('emailInput')).to.equal(subscription.EMAIL);
+        }
+
+        if (subscription.FIRST_NAME) {
+            expect(await this.getValue('firstNameInput')).to.equal(subscription.FIRST_NAME);
+        }
+
+        if (subscription.LAST_NAME) {
+            expect(await this.getValue('lastNameInput')).to.equal(subscription.LAST_NAME);
+        }
+
+        for (const field of list.customFields) {
+            if (field.key in subscription) {
+                expect(await this.getValue(`[name="${field.column}"]`)).to.equal(subscription[field.key]);
+            }
+        }
     }
-};
+});
 
-const mail = {
-    navigate(address) {
-        this.driver.sleep(100);
-        this.driver.navigate().to(`http://localhost:${config.app.testserver.mailboxserverport}/${address}`);
-        return this.waitUntilVisible();
-    }
-};
+module.exports = list => ({
 
-module.exports = (driver, list) => ({
-
-    webSubscribe: Object.assign(page(driver), web, {
+    webSubscribe: web({
         url: `/subscription/${list.cid}`,
-        elementToWaitFor: 'form',
+        elementsToWaitFor: ['form'],
+        textsToWaitFor: ['Subscribe to list'],
         elements: {
             form: `form[action="/subscription/${list.cid}/subscribe"]`,
             emailInput: '#main-form input[name="email"]',
+            firstNameInput: '#main-form input[name="first-name"]',
+            lastNameInput: '#main-form input[name="last-name"]',
+            submitButton: 'a[href="#submit"]'
+        }
+    }, fieldHelpers(list)),
+
+    webSubscribeNonPublic: web({
+        url: `/subscription/${list.cid}`,
+        textsToWaitFor: ['The list does not allow public subscriptions'],
+    }),
+
+    webConfirmSubscriptionNotice: web({
+        url: `/subscription/${list.cid}/confirm-subscription-notice`,
+        textsToWaitFor: ['We need to confirm your email address']
+    }),
+
+    mailConfirmSubscription: mail({
+        elementsToWaitFor: ['confirmLink'],
+        textsToWaitFor: ['Please Confirm Subscription'],
+        elements: {
+            confirmLink: `a[href^="${config.settings['service-url']}subscription/confirm/subscribe/"]`
+        }
+    }),
+
+    mailAlreadySubscribed: mail({
+        elementsToWaitFor: ['unsubscribeLink'],
+        textsToWaitFor: ['Email address already registered'],
+        elements: {
+            unsubscribeLink: `a[href^="${config.settings['service-url']}subscription/${list.cid}/unsubscribe/"]`,
+            manageLink: `a[href^="${config.settings['service-url']}subscription/${list.cid}/manage/"]`
+        },
+        links: {
+            unsubscribeLink: `/subscription/${list.cid}/unsubscribe/:ucid`,
+            manageLink: `/subscription/${list.cid}/manage/:ucid`
+        }
+    }),
+
+    webSubscribedNotice: web({
+        url: `/subscription/${list.cid}/subscribed-notice`,
+        textsToWaitFor: ['Subscription Confirmed']
+    }),
+
+    mailSubscriptionConfirmed: mail({
+        elementsToWaitFor: ['unsubscribeLink'],
+        textsToWaitFor: ['Subscription Confirmed'],
+        elements: {
+            unsubscribeLink: `a[href^="${config.settings['service-url']}subscription/${list.cid}/unsubscribe/"]`,
+            manageLink: `a[href^="${config.settings['service-url']}subscription/${list.cid}/manage/"]`
+        },
+        links: {
+            unsubscribeLink: `/subscription/${list.cid}/unsubscribe/:ucid`,
+            manageLink: `/subscription/${list.cid}/manage/:ucid`
+        }
+    }),
+
+    webManage: web({
+        url: `/subscription/${list.cid}/manage/:ucid`,
+        elementsToWaitFor: ['form'],
+        textsToWaitFor: ['Update Your Preferences'],
+        elements: {
+            form: `form[action="/subscription/${list.cid}/manage"]`,
+            emailInput: '#main-form input[name="email"]',
+            firstNameInput: '#main-form input[name="first-name"]',
+            lastNameInput: '#main-form input[name="last-name"]',
+            submitButton: 'a[href="#submit"]',
+            manageAddressLink: `a[href^="/subscription/${list.cid}/manage-address/"]`
+        },
+        links: {
+            manageAddressLink: `/subscription/${list.cid}/manage-address/:ucid`
+        }
+    }, fieldHelpers(list)),
+
+    webManageAddress: web({
+        url: `/subscription/${list.cid}/manage-address/:ucid`,
+        elementsToWaitFor: ['form'],
+        textsToWaitFor: ['Update Your Email Address'],
+        elements: {
+            form: `form[action="/subscription/${list.cid}/manage-address"]`,
+            emailInput: '#main-form input[name="email"]',
+            emailNewInput: '#main-form input[name="email-new"]',
             submitButton: 'a[href="#submit"]'
         }
     }),
 
-    webConfirmSubscriptionNotice: Object.assign(page(driver), web, {
-        url: `/subscription/${list.cid}/confirm-notice`,
-        elementToWaitFor: 'homepageButton',
+    mailConfirmAddressChange: mail({
+        elementsToWaitFor: ['confirmLink'],
+        textsToWaitFor: ['Please Confirm Subscription Address Change'],
         elements: {
-            homepageButton: `a[href="${config.settings['default-homepage']}"]`
+            confirmLink: `a[href^="${config.settings['service-url']}subscription/confirm/change-address/"]`
         }
     }),
 
-    mailConfirmSubscription: Object.assign(page(driver), mail, {
-        elementToWaitFor: 'confirmLink',
-        elements: {
-            confirmLink: `a[href^="${config.settings['service-url']}subscription/subscribe/"]`
-        }
+    webUpdatedNotice: web({
+        url: `/subscription/${list.cid}/updated-notice`,
+        textsToWaitFor: ['Profile Updated']
     }),
 
-    webSubscribedNotice: Object.assign(page(driver), web, {
-        elementToWaitFor: 'homepageButton',
-        elements: {
-            homepageButton: 'a[href^="https://mailtrain.org"]'
-        }
+    webUnsubscribedNotice: web({
+        url: `/subscription/${list.cid}/unsubscribed-notice`,
+        textsToWaitFor: ['Unsubscribe Successful']
     }),
 
-    mailSubscriptionConfirmed: Object.assign(page(driver), mail, {
-        elementToWaitFor: 'unsubscribeLink',
-        elements: {
-            unsubscribeLink: 'a[href*="/unsubscribe/"]',
-            manageLink: 'a[href*="/manage/"]'
-        }
-    }),
-
-    webUnsubscribe: Object.assign(page(driver), web, {
-        elementToWaitFor: 'submitButton',
-        elements: {
-            submitButton: 'a[href="#submit"]'
-        }
-    }),
-
-    webUnsubscribedNotice: Object.assign(page(driver), web, {
-        elementToWaitFor: 'homepageButton',
-        elements: {
-            homepageButton: 'a[href^="https://mailtrain.org"]'
-        }
-    }),
-
-    mailUnsubscriptionConfirmed: Object.assign(page(driver), mail, {
-        elementToWaitFor: 'resubscribeLink',
+    mailUnsubscriptionConfirmed: mail({
+        elementsToWaitFor: ['resubscribeLink'],
+        textsToWaitFor: ['You Are Now Unsubscribed'],
         elements: {
             resubscribeLink: `a[href^="${config.settings['service-url']}subscription/${list.cid}"]`
         }
-    })
+    }),
+
+    webUnsubscribe: web({
+        elementsToWaitFor: ['submitButton'],
+        textsToWaitFor: ['Unsubscribe'],
+        elements: {
+            submitButton: 'a[href="#submit"]'
+        }
+    }),
+
+    webConfirmUnsubscriptionNotice: web({
+        url: `/subscription/${list.cid}/confirm-unsubscription-notice`,
+        textsToWaitFor: ['We need to confirm your email address']
+    }),
+
+    mailConfirmUnsubscription: mail({
+        elementsToWaitFor: ['confirmLink'],
+        textsToWaitFor: ['Please Confirm Unsubscription'],
+        elements: {
+            confirmLink: `a[href^="${config.settings['service-url']}subscription/confirm/unsubscribe/"]`
+        }
+    }),
+
+    webManualUnsubscribeNotice: web({
+        url: `/subscription/${list.cid}/manual-unsubscribe-notice`,
+        elementsToWaitFor: ['contactLink'],
+        textsToWaitFor: ['Online Unsubscription Is Not Possible', config.settings['admin-email']],
+        elements: {
+            contactLink: `a[href^="mailto:${config.settings['admin-email']}"]`
+        }
+    }),
 
 });

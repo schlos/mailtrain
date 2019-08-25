@@ -40,18 +40,6 @@
     #merge-tag-reference-container table th {
         padding: 5px 20px 5px 0;
     }
-
-    /* Fixed width sidebar */
-    #gjs > .gjs-editor > .gjs-cv-canvas { width: 100% !important; padding-right: 300px !important; }
-    #gjs-pn-views, #gjs-pn-views-container { width: 300px !important; }
-    #gjs-pn-options { right: 300px !important; }
-    #gjs-pn-commands { width: 100% !important; padding-right: 310px !important; }
-
-    /* Hide the fullscreen button - doesn't work from within our iFrame */
-    #gjs-pn-options .gjs-pn-btn.fa.fa-arrows-alt { display: none !important; }
-
-    /* Hide pencil icon on image toolbar, issue #195 */
-    .gjs-toolbar > div > div.fa-pencil { display: none; }
 </style>
 
 
@@ -59,14 +47,7 @@
 
 
 <div id="gjs-wrapper">
-    <div id="gjs" style="height:0px; overflow:hidden">
-        {{#if resource.editorData.html}}
-            <style>{{{resource.editorData.css}}}</style>
-            {{{resource.editorData.html}}}
-        {{else}}
-            {{{resource.html}}}
-        {{/if}}
-    </div>
+    <div id="gjs" style="height: 0px; overflow: hidden"></div>
 </div>
 
 
@@ -75,7 +56,7 @@
 <form id="test-form" class="test-form" action="/editorapi/test?editor=grapejs" method="post" style="display: none">
     <div class="putsmail-c">
         <div class="gjs-sm-property" style="font-size: 10px">
-            Hello! I'm a placerholder message.
+            Please enter the email address to send a test to:
             <span class="form-status" style="opacity: 0">
                 <i class="fa fa-refresh anim-spin" aria-hidden="true"></i>
             </span>
@@ -136,21 +117,75 @@
 <script>
     $.ajaxSetup({ headers: { 'X-CSRF-TOKEN': '{{csrfToken}}' } });
 
-    var editor = grapesjs.init({
-        height: '100%',
-        storageManager: {
-            type: 'none'
-        },
-        assetManager: {
-            assets: [],
-            upload: '/editorapi/upload?type={{type}}&id={{resource.id}}&editor={{resource.editorName}}',
-            uploadText: 'Drop images here or click to upload',
-        },
-        container : '#gjs',
-        fromElement: true,
-        plugins: ['gjs-preset-newsletter'],
-        pluginsOpts: {
-            'gjs-preset-newsletter': {
+    var serviceUrl = '{{{serviceUrl}}}';
+    var resource = {{{stringifiedResource}}};
+
+    var config = (function(mode) {
+        var c = {
+            clearOnRender: true,
+            height: '100%',
+            storageManager: {
+                type: 'none'
+            },
+            assetManager: {
+                assets: [],
+                upload: '/editorapi/upload?type={{type}}&id={{resource.id}}&editor={{editor.name}}',
+                uploadText: 'Drop images here or click to upload',
+                headers: {
+                    'X-CSRF-TOKEN': '{{csrfToken}}',
+                },
+            },
+            styleManager: {
+		        clearProperties: true,
+            },
+            container : '#gjs',
+            fromElement: false,
+            plugins: [],
+            pluginsOpts: {},
+        };
+
+        if (mode === 'mjml') {
+            var serializer = new XMLSerializer();
+            var doc = new DOMParser().parseFromString(resource.editorData.mjml, 'text/xml');
+
+            // convert relative to absolute urls
+            ['mj-wrapper', 'mj-section', 'mj-navbar', 'mj-hero', 'mj-image'].forEach(function(tagName) {
+                var elements = doc.getElementsByTagName(tagName);
+
+                for (var i = 0; i < elements.length; i++) {
+                    var node = elements[i];
+                    var attrName = tagName === 'mj-image' ? 'src' : 'background-url';
+                    var url = node.getAttribute(attrName);
+
+                    if (url && url.substring(0, 2) === './') {
+                        var absoluteUrl = serviceUrl + 'grapejs/templates/' + resource.editorData.template + '/' + url.substring(2);
+                        node.setAttribute(attrName, absoluteUrl);
+                    }
+                }
+            });
+
+            var title = doc.getElementsByTagName('mj-title')[0];
+            if (title) {
+                title.textContent = resource.name;
+            }
+
+            var head = doc.getElementsByTagName('mj-head')[0];
+            var mjHead = head ? serializer.serializeToString(head) : '<mj-head></mj-head>';
+
+            var container = doc.getElementsByTagName('mj-container')[0];
+            var mjContainer = container ? serializer.serializeToString(container) : '<mj-container></mj-container>';
+
+            c.plugins.push('gjs-mjml', 'gjs-preset-mjml');
+            c.pluginsOpts['gjs-mjml'] = {
+                preMjml: '<mjml>' + mjHead + '<mj-body>',
+                postMjml: '</mj-body></mjml>',
+            };
+            c.components = mjContainer;
+        }
+
+        if (mode === 'html') {
+            c.plugins.push('gjs-preset-newsletter');
+            c.pluginsOpts['gjs-preset-newsletter'] = {
                 modalLabelImport: 'Paste all your code here below and click import',
                 modalLabelExport: 'Copy the code and use it wherever you want',
                 codeViewerTheme: 'material',
@@ -163,68 +198,218 @@
                     margin: 0,
                     padding: 0,
                 }
-            }
+            };
+            c.components = resource.editorData.html || resource.html || '';
+            c.style = resource.editorData.css || '';
         }
-    });
 
-    $.getJSON('/editorapi/upload?type={{type}}&id={{resource.id}}&editor={{resource.editorName}}', function(data) {
+        return c;
+    })('{{editor.mode}}');
+
+    var editor = grapesjs.init(config);
+
+    $.getJSON('/editorapi/upload?type={{type}}&id={{resource.id}}&editor={{editor.name}}', function(data) {
         editor.AssetManager.add(data.files);
     });
 
-    function getPreparedHtml() {
-        var imgs = [];
-        $('.gjs-pn-buttons > .gjs-pn-btn.fa.fa-desktop').click();
-        $('.gjs-editor > .gjs-cv-canvas > iframe.gjs-frame')
-            .contents()
-            .find('img')
-            .each(function() {
-                var src = $(this).attr('src');
-                var s = src.match(/\/editorapi\/img\?src=([^&]*)/);
-                var encodedSrc = (s && s[1]) || encodeURIComponent(src);
-                var dynamicSrc = '/editorapi/img?src=' + encodedSrc + '&method=resize&params=' + $(this).width() + '%2C' + $(this).height();
-                imgs.push({
-                    cls: $(this).attr('class').split(' ')[0],
-                    dynamicSrc: dynamicSrc,
-                    src: src,
+    function getMjml() {
+        var c = config.pluginsOpts['gjs-mjml'];
+        return c.preMjml + editor.getHtml() + c.postMjml;
+    }
+
+    function getPreparedHtml(callback) {
+        var html;
+
+        switch ('{{editor.mode}}') {
+            case 'html':
+                html = editor.runCommand('gjs-get-inlined-html');
+                html = '<!doctype html><html><head><meta charset="utf-8"><title>{{resource.name}}</title></head><body>' + html + '</body></html>';
+                break;
+            case 'mjml':
+                var mjml = editor.runCommand('mjml-get-code');
+                mjml.errors.length && mjml.errors.forEach(function(err) {
+                    console.warn(err.formattedMessage);
+                });
+                html = mjml.html;
+                break;
+        }
+
+        var frame = document.createElement('iframe');
+        frame.width = 2048;
+        frame.height = 0;
+        document.body.appendChild(frame);
+        var frameDoc = frame.contentDocument || frame.contentWindow.document;
+
+        var isLocalImage = function(src) {
+            var a1 = document.createElement('a');
+            var a2 = document.createElement('a');
+            a1.href = serviceUrl;
+            a2.href = src;
+            return a1.host === a2.host;
+        };
+
+        frame.onload = function() {
+            var imgs = frameDoc.querySelectorAll('img');
+
+            for (var i = 0; i < imgs.length; i++) {
+                var img = imgs[i];
+                var m = img.src.match(/\/editorapi\/img\?src=([^&]*)/);
+                var encodedSrc = m && m[1] || encodeURIComponent(img.src);
+                if (isLocalImage(decodeURIComponent(encodedSrc))) {
+                    img.src = '/editorapi/img?src=' + encodedSrc + '&method=resize&params=' + img.clientWidth + '%2C' + img.clientHeight;
+                }
+            }
+
+            html = '<!doctype html>' + frameDoc.documentElement.outerHTML;
+            document.body.removeChild(frame);
+            callback(html);
+        };
+
+        frameDoc.open();
+        frameDoc.write(html);
+        frameDoc.close();
+    }
+
+
+    // Save Button
+
+    window.bridge = window.bridge || {};
+
+    $('#mt-save').on('click', function() {
+
+        if ($(this).hasClass('busy')) {
+            return;
+        }
+
+        $(this).addClass('busy');
+
+        getPreparedHtml(function(html) {
+            var editorData = '{{editor.mode}}' === 'mjml' ? {
+                template: resource.editorData.template,
+                mjml: getMjml(),
+            } : {
+                template: resource.editorData.template,
+                css: editor.getCss(),
+                html: editor.getHtml(),
+                style: editor.getStyle(),
+                components: editor.getComponents(),
+            };
+
+            // TODO: Make templates and campaigns accept partial updates, i.e. don't require 'name' and 'list'
+            var update = {
+                id: resource.id,
+                name: resource.name,
+                {{#if resource.list}} list: resource.list, {{/if}}
+                editorData: JSON.stringify(editorData),
+                html: html,
+            };
+
+            $.post('/editorapi/update?type={{type}}&editor={{editor.name}}', update, null, 'html')
+                .success(function() {
+                    window.bridge.lastSavedHtml = html;
+                    toastr.success('Sucessfully saved');
+                })
+                .fail(function(data) {
+                    toastr.error(data.responseText || 'An error occured while saving the document');
+                })
+                .always(function() {
+                    setTimeout(function() {
+                        $('#mt-save').removeClass('busy');
+                    }, 200); // Don't save too fast
                 });
         });
-        var html = editor.runCommand('gjs-get-inlined-html');
-        imgs.forEach(function(img) {
-            html = html.replace(
-                '<img class="' + img.cls + '" src="' + img.src,
-                '<img class="' + img.cls + '" src="' + img.dynamicSrc
-            );
-        });
+    });
 
-        html = '<!doctype html><html><head><meta charset="utf-8"><title>{{resource.name}}</title></head><body>' + html + '</body></html>';
 
-        return html;
-    }
+    // Close Button
+
+    $('#mt-close').on('click', function() {
+        if (confirm('Unsaved changes will be lost. Close now?') === true) {
+            window.bridge.exit
+                ? window.bridge.exit()
+                : window.location.href = '/{{type}}s/edit/{{resource.id}}?tab=template';
+        }
+    });
+
+
+    // Commands
 
     var mdlClass = 'gjs-mdl-dialog-sm';
     var pnm = editor.Panels;
     var cmdm = editor.Commands;
-    var testContainer = document.getElementById("test-form");
-    var contentEl = testContainer.querySelector('input[name=html]');
     var md = editor.Modal;
+
+
+    // Test email command
+
+    var testContainer = document.getElementById('test-form');
+    var testContentEl = testContainer.querySelector('input[name=html]');
 
     cmdm.add('send-test', {
         run(editor, sender) {
-            sender.set('active', 0);
-            var modalContent = md.getContentEl();
-            var mdlDialog = document.querySelector('.gjs-mdl-dialog');
-            // var cmdGetCode = cmdm.get('gjs-get-inlined-html');
-            // contentEl.value = cmdGetCode && cmdGetCode.run(editor);
-            contentEl.value = getPreparedHtml();
-            mdlDialog.className += ' ' + mdlClass;
-            testContainer.style.display = 'block';
-            md.setTitle('Test your Newsletter');
-            md.setContent(testContainer);
-            md.open();
-            md.getModel().once('change:open', function() {
-                mdlDialog.className = mdlDialog.className.replace(mdlClass, '');
-                //clean status
-            })
+            // TODO: Show a spinner
+            getPreparedHtml(function(html) {
+                sender.set('active', 0);
+                var mdlDialog = document.querySelector('.gjs-mdl-dialog');
+                testContentEl.value = html;
+                mdlDialog.className += ' ' + mdlClass;
+                testContainer.style.display = 'block';
+                md.setTitle('Test your Newsletter');
+                
+                var modalContent = $('<div>').append(testContainer).html();
+                for(var i=0; i<100; i++) {
+                    try {
+                        md.setContent(modalContent);
+                        break;
+                    } catch(err) {}
+                }
+                
+                testContainerCopy = $(".gjs-mdl-dialog #test-form");
+                
+                var statusFormElC = document.querySelector('.gjs-mdl-dialog .form-status');
+                var statusFormEl = document.querySelector('.gjs-mdl-dialog .form-status i');
+
+                var ajaxTest = ajaxable(testContainerCopy, { headers: { 'X-CSRF-TOKEN': '{{csrfToken}}' } })
+                    .onStart(function() {
+                        statusFormEl.className = 'fa fa-refresh anim-spin';
+                        statusFormElC.style.opacity = '1';
+                        statusFormElC.className = 'form-status';
+                    })
+                    .onResponse(function(res) {
+                        if (res.data) {
+                            statusFormElC.style.opacity = '0';
+                            statusFormEl.removeAttribute('data-tooltip');
+                            md.close();
+                            toastr.success('Testmail sent');
+                        } else if (res.errors) {
+                            statusFormEl.className = 'fa fa-exclamation-circle';
+                            statusFormEl.setAttribute('data-tooltip', res.errors);
+                            statusFormElC.className = 'form-status text-danger';
+                            toastr.error(res.errors);
+                        }
+                    });
+
+                // Remember testemail address
+
+                var isValidEmail = function(email) {
+                    return /\S+@\S+\.\S+/.test(email);
+                };
+
+                if (isValidEmail(localStorage.getItem('testemail'))) {
+                    $('.gjs-mdl-dialog #test-form input[name=email]').val(localStorage.getItem('testemail'));
+                }
+
+                $('.gjs-mdl-dialog #test-form').on('submit', function() {
+                    var email = $('.gjs-mdl-dialog #test-form input[name=email]').val();
+                    isValidEmail(email) && localStorage.setItem('testemail', email);
+                });
+                
+                md.open();
+                md.getModel().once('change:open', function() {
+                    mdlDialog.className = mdlDialog.className.replace(mdlClass, '');
+                    //clean status
+                });
+            });
         }
     });
 
@@ -238,29 +423,10 @@
         },
     });
 
-    var statusFormElC = document.querySelector('.form-status');
-    var statusFormEl = document.querySelector('.form-status i');
-    var ajaxTest = ajaxable(testContainer, { headers: { 'X-CSRF-TOKEN': '{{csrfToken}}' } })
-        .onStart(function() {
-            statusFormEl.className = 'fa fa-refresh anim-spin';
-            statusFormElC.style.opacity = '1';
-            statusFormElC.className = 'form-status';
-        })
-        .onResponse(function(res) {
-            if (res.data) {
-                statusFormElC.style.opacity = '0';
-                statusFormEl.removeAttribute('data-tooltip');
-                md.close();
-                toastr.success('Testmail sent');
-            } else if (res.errors) {
-                statusFormEl.className = 'fa fa-exclamation-circle';
-                statusFormEl.setAttribute('data-tooltip', res.errors);
-                statusFormElC.className = 'form-status text-danger';
-                toastr.error(res.errors);
-            }
-        });
 
-    // Add Merge Tag Reference command
+
+    // Merge Tag Reference command
+
     var mergeTagReferenceContainer = document.getElementById('merge-tag-reference-container');
     cmdm.add('open-merge-tag-reference', {
         run(editor, sender) {
@@ -269,7 +435,12 @@
             mdlDialog.className += ' gjs-mdl-dialog-lg';
             mergeTagReferenceContainer.style.display = 'block';
             md.setTitle('Merge tag reference');
-            md.setContent(mergeTagReferenceContainer);
+            for(var i=0; i<100; i++) {
+                try {
+                    md.setContent(mergeTagReferenceContainer);
+                    break;
+                } catch(err) {}
+            }
             md.open();
             md.getModel().once('change:open', function() {
                 mdlDialog.className = mdlDialog.className.replace('gjs-mdl-dialog-lg', '');
@@ -287,7 +458,9 @@
         },
     });
 
+
     // Simple warn notifier
+
     var origWarn = console.warn;
     toastr.options = {
         closeButton: true,
@@ -300,8 +473,10 @@
         origWarn(msg);
     };
 
+
+    // Beautify tooltips
+
     $(document).ready(function() {
-        // Beautify tooltips
         $('*[title]').each(function() {
             var el = $(this);
             var title = el.attr('title').trim();
@@ -310,65 +485,6 @@
                 el.attr('title', '');
             }
         });
-
-        // Remember testmail address
-        var isValidEmail = function(email) {
-            return /\S+@\S+\.\S+/.test(email);
-        };
-        var email = localStorage.getItem('testemail');
-        isValidEmail(email) && $('#test-form input[name=email]').val(email);
-
-        $(document).on('submit', '#test-form', function() {
-            var email = $('#test-form input[name=email]').val();
-            isValidEmail(email) && localStorage.setItem('testemail', email);
-        });
-
-
-        // Save and Close Buttons
-
-        window.bridge = window.bridge || {};
-
-        $('#mt-close').on('click', function() {
-            if (confirm('Unsaved changes will be lost. Close now?') === true) {
-                window.bridge.exit
-                    ? window.bridge.exit()
-                    : window.location.href = '/{{type}}s/edit/{{resource.id}}?tab=template';
-            }
-        });
-
-        $('#mt-save').on('click', function() {
-            if ($(this).hasClass('busy')) {
-                return;
-            }
-            $(this).addClass('busy');
-
-            var html = getPreparedHtml();
-
-            $.post('/editorapi/update?type={{type}}&editor={{resource.editorName}}', {
-                id: {{resource.id}},
-                name: '{{resource.name}}',
-                {{#if resource.list}} list: {{resource.list}}, {{/if}}
-                html: html,
-                editorData: JSON.stringify({
-                    template: '{{resource.editorData.template}}',
-                    css: editor.getCss(),
-                    html: editor.getHtml(),
-                    style: editor.getStyle(),
-                    components: editor.getComponents(),
-                }),
-            }, null, 'html')
-                .success(function() {
-                    window.bridge.lastSavedHtml = html;
-                    toastr.success('Sucessfully saved');
-                })
-                .fail(function(data) {
-                    toastr.error(data.responseText || 'An error occured while saving the document');
-                })
-                .always(function() {
-                    setTimeout(function() {
-                        $(this).removeClass('busy');
-                    }.bind(this), 500); // Don't save too fast
-                }.bind(this));
-        });
     });
+
 </script>

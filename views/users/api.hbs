@@ -43,6 +43,27 @@
     </ul>
 </div>
 
+<h3>GET /api/subscriptions/:listId – {{#translate}}Get list of subscriptions{{/translate}}</h3>
+
+<p>
+    {{#translate}}Retrieve a list of subscriptions to the list referenced by :listId. All fields of the subscribers will be returned. Note that custom fields will have generated names.{{/translate}}
+</p>
+
+<p>
+    <strong>GET</strong> {{#translate}}arguments{{/translate}}
+</p>
+<ul>
+    <li><strong>access_token</strong> – {{#translate}}your personal access token{{/translate}}
+    <li><strong>start</strong> – {{#translate}}Start position{{/translate}} (<em>{{#translate}}optional, default 0{{/translate}}</em>)</li>
+    <li><strong>limit</strong> – {{#translate}}limit subscription count in response{{/translate}} (<em>{{#translate}}optional, default 10000{{/translate}}</em>)</li>
+</ul>
+
+<p>
+    <strong>{{#translate}}Example{{/translate}}</strong>
+</p>
+
+<pre>curl -XGET '{{serviceUrl}}api/subscriptions/B16uVTdW?access_token={{accessToken}}&limit=10&start=0' </pre>
+
 <h3>POST /api/subscribe/:listId – {{#translate}}Add subscription{{/translate}}</h3>
 
 <p>
@@ -142,6 +163,46 @@
 <pre>curl -XPOST {{serviceUrl}}api/delete/B16uVTdW?access_token={{accessToken}} \
 --data 'EMAIL=test@example.com'</pre>
 
+<h3>POST /api/field/:listId – {{#translate}}Add new custom field{{/translate}}</h3>
+
+<p>
+    {{#translate}}This API call creates a new custom field for a list.{{/translate}}
+</p>
+
+<p>
+    <strong>GET</strong> {{#translate}}arguments{{/translate}}
+</p>
+<ul>
+    <li><strong>access_token</strong> – {{#translate}}your personal access token{{/translate}}
+</ul>
+
+<p>
+    <strong>POST</strong> {{#translate}}arguments{{/translate}}
+</p>
+<ul>
+    <li><strong>NAME</strong> – {{#translate}}field name{{/translate}} (<em>{{#translate}}required{{/translate}}</em>)</li>
+    <li><strong>DESCRIPTION</strong> – {{#translate}}field description{{/translate}}</li>
+    <li><strong>TYPE</strong> – {{#translate}}one of the following types:{{/translate}}
+        <ul>
+            {{#each allowedTypes}}
+                <li>
+                    <strong>{{type}}</strong> {{description}}
+                </li>
+            {{/each}}
+        </ul>
+    </li>
+    <li><strong>GROUP</strong> – {{#translate}}If the type is 'option' then you also need to specify the parent element ID{{/translate}}</li>
+    <li><strong>GROUP_TEMPLATE</strong> – {{#translate}}Template for the group element. If not set, then values of the elements are joined with commas{{/translate}}</li>
+    <li><strong>VISIBLE</strong> – yes/no, {{#translate}}if not visible then the subscriber can not view or modify this value at the profile page{{/translate}}</li>
+</ul>
+
+<p>
+    <strong>{{#translate}}Example{{/translate}}</strong>
+</p>
+
+<pre>curl -XPOST {{serviceUrl}}api/field/B16uVTdW?access_token={{accessToken}} \
+--data 'NAME=Birthday&amp;TYPE=birthday-us&amp;VISIBLE=yes'</pre>
+
 <h3>GET /api/blacklist/get – {{#translate}}Get list of blacklisted emails{{/translate}}</h3>
 
 <p>
@@ -217,3 +278,89 @@
 
 <pre>curl -XPOST '{{serviceUrl}}api/blacklist/delete?access_token={{accessToken}}' \
 --data 'EMAIL=test@example.com&amp;'</pre>
+
+<h3>GET /api/lists/:email – {{#translate}}Get the lists a user has subscribed to{{/translate}}</h3>
+
+<p>
+  {{#translate}}Retrieve the lists that the user with :email has subscribed to. {{/translate}}
+</p>
+
+<p>
+  <strong>GET</strong> {{#translate}}arguments{{/translate}}
+</p>
+<ul>
+  <li><strong>access_token</strong> – {{#translate}}your personal access token{{/translate}}
+</ul>
+
+<p>
+  <strong>{{#translate}}Example{{/translate}}</strong>
+</p>
+
+<pre>curl -XGET '{{serviceUrl}}api/lists/test@example.com?access_token={{accessToken}} </pre>
+
+<h3>GET /api/lists – {{#translate}}Get all lists{{/translate}}</h3>
+
+<p>
+  {{#translate}}Retrieve every list. {{/translate}}
+</p>
+
+<p>
+  <strong>GET</strong> {{#translate}}arguments{{/translate}}
+</p>
+<ul>
+  <li><strong>access_token</strong> – {{#translate}}your personal access token{{/translate}}
+</ul>
+
+<p>
+  <strong>{{#translate}}Example{{/translate}}</strong>
+</p>
+
+<pre>curl -XGET '{{serviceUrl}}api/lists?access_token={{accessToken}}'</pre>
+
+<h3>GET /api/list/:id – {{#translate}}Get list by id{{/translate}}</h3>
+
+<p>
+  {{#translate}}Retrieve the list with :id {{/translate}}
+</p>
+
+<p>
+  <strong>GET</strong> {{#translate}}arguments{{/translate}}
+</p>
+<ul>
+  <li><strong>access_token</strong> – {{#translate}}your personal access token{{/translate}}
+</ul>
+
+<p>
+  <strong>{{#translate}}Example{{/translate}}</strong>
+</p>
+
+<pre>curl -XGET '{{serviceUrl}}api/list/1?access_token={{accessToken}}'</pre>
+
+<h3>POST /api/changeemail/:listId – {{#translate}}Change email of existing list subscriber{{/translate}}</h3>
+
+<p>
+    {{#translate}}This API call changes the email address of an existing list subscriber.{{/translate}}
+</p>
+
+<p>
+    <strong>GET</strong> {{#translate}}arguments{{/translate}}
+</p>
+<ul>
+    <li><strong>access_token</strong> – {{#translate}}your personal access token{{/translate}}
+</ul>
+
+<p>
+    <strong>POST</strong> {{#translate}}arguments{{/translate}}
+</p>
+<ul>
+    <li><strong>EMAILOLD</strong> – {{#translate}}subscriber's old email address{{/translate}} (<em>{{#translate}}required{{/translate}}</em>)
+    <li><strong>EMAILNEW</strong> – {{#translate}}subscriber's new email address{{/translate}} (<em>{{#translate}}required{{/translate}}</em>)
+</ul>
+
+<p>
+    <strong>{{#translate}}Example{{/translate}}</strong>
+</p>
+
+<pre>curl -XPOST {{serviceUrl}}api/changeemail/B16uVTdW?access_token={{accessToken}} \
+--data 'EMAILOLD=test@example.com&EMAILNEW=foo@bar.com'</pre>
+

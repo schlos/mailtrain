@@ -71,6 +71,8 @@ router.get('/create', passport.csrfProtection, (req, res) => {
         data.publicSubscribe = true;
     }
 
+    data.unsubscriptionModeOptions = getUnsubscriptionModeOptions(data.unsubscriptionMode || lists.UnsubscriptionMode.ONE_STEP);
+
     res.render('lists/create', data);
 });
 
@@ -102,6 +104,8 @@ router.get('/edit/:id', passport.csrfProtection, (req, res) => {
                 row.selected = list.defaultForm === row.id;
                 return row;
             });
+
+            list.unsubscriptionModeOptions = getUnsubscriptionModeOptions(list.unsubscriptionMode);
 
             list.csrfToken = req.csrfToken();
             res.render('lists/edit', list);
@@ -281,7 +285,7 @@ router.get('/view/:id', passport.csrfProtection, (req, res) => {
 
                 list.imports = imports.map((entry, i) => {
                     entry.index = i + 1;
-                    entry.importType = entry.type === 1 ? _('Subscribe') : _('Unsubscribe');
+                    entry.importType = entry.type === 0 ? _('Subscribe') : (entry.type === 1 ? _('Force Subscribe') : _('Unsubscribe'));
                     switch (entry.status) {
                         case 0:
                             entry.importStatus = _('Initializing');
@@ -447,7 +451,7 @@ router.post('/subscription/unsubscribe', passport.parseForm, passport.csrfProtec
                 return res.redirect('/lists/view/' + list.id);
             }
 
-            subscriptions.unsubscribe(list.id, subscription.email, false, err => {
+            subscriptions.changeStatus(list.id, subscription.id, false, subscriptions.Status.UNSUBSCRIBED, (err, found) => {
                 if (err) {
                     req.flash('danger', err && err.message || err || _('Could not unsubscribe user'));
                     return res.redirect('/lists/subscription/' + list.id + '/edit/' + subscription.cid);
@@ -547,7 +551,7 @@ router.get('/subscription/:id/import/:importId', passport.csrfProtection, (req, 
                 data.list = list;
                 data.csrfToken = req.csrfToken();
 
-                data.customFields = fields.getRow(fieldList, data);
+                data.customFields = fields.getRow(fieldList, data, false, true);
 
                 res.render('lists/subscription/import-preview', data);
             });
@@ -570,7 +574,14 @@ router.post('/subscription/import', uploads.single('listimport'), passport.parse
                 return res.redirect('/lists');
             } else {
 
-                subscriptions.createImport(list.id, req.body.type === 'subscribed' ? 1 : 2, req.file.path, req.file.size, delimiter, req.body.emailcheck === 'enabled' ? 1 : 0, {
+                let type = 0; // Use the existing subscription status or SUBSCRIBED
+                if (req.body.type === 'force_subscribed') {
+                    type = subscriptions.Status.SUBSCRIBED;
+                } else if (req.body.type === 'unsubscribed') {
+                    type = subscriptions.Status.UNSUBSCRIBED;
+                }
+
+                subscriptions.createImport(list.id, type, req.file.path, req.file.size, delimiter, req.body.emailcheck === 'enabled' ? 1 : 0, {
                     columns: rows[0],
                     example: rows[1] || []
                 }, (err, importId) => {
@@ -625,8 +636,14 @@ function getPreview(path, size, delimiter, callback) {
                 fs.close(fd, () => {
                     // just ignore
                 });
+                if (err) {
+                    return callback(err);
+                }
                 if (!data || !data.length) {
-                    return callback(null, new Error(_('Empty file')));
+                    return callback(new Error(_('Empty file')));
+                }
+                if (data.length < 2) {
+                    return callback(new Error(_('Too few rows')));
                 }
                 callback(err, data);
             });
@@ -642,7 +659,7 @@ router.post('/subscription/import-confirm', passport.parseForm, passport.csrfPro
         }
 
         subscriptions.getImport(list.id, req.body.import, (err, data) => {
-            if (err || !list) {
+            if (err || !data) {
                 req.flash('danger', err && err.message || err || _('Could not find import data with specified ID'));
                 return res.redirect('/lists');
             }
@@ -770,5 +787,41 @@ router.post('/quicklist/ajax', (req, res) => {
         });
     });
 });
+
+function getUnsubscriptionModeOptions(unsubscriptionMode) {
+    const options = [];
+
+    options[lists.UnsubscriptionMode.ONE_STEP] = {
+        value: lists.UnsubscriptionMode.ONE_STEP,
+        selected: unsubscriptionMode === lists.UnsubscriptionMode.ONE_STEP,
+        label: _('One-step (i.e. no email with confirmation link)')
+    };
+
+    options[lists.UnsubscriptionMode.ONE_STEP_WITH_FORM] = {
+        value: lists.UnsubscriptionMode.ONE_STEP_WITH_FORM,
+        selected: unsubscriptionMode === lists.UnsubscriptionMode.ONE_STEP_WITH_FORM,
+        label: _('One-step with unsubscription form (i.e. no email with confirmation link)')
+    };
+
+    options[lists.UnsubscriptionMode.TWO_STEP] = {
+        value: lists.UnsubscriptionMode.TWO_STEP,
+        selected: unsubscriptionMode === lists.UnsubscriptionMode.TWO_STEP,
+        label: _('Two-step (i.e. an email with confirmation link will be sent)')
+    };
+
+    options[lists.UnsubscriptionMode.TWO_STEP_WITH_FORM] = {
+        value: lists.UnsubscriptionMode.TWO_STEP_WITH_FORM,
+        selected: unsubscriptionMode === lists.UnsubscriptionMode.TWO_STEP_WITH_FORM,
+        label: _('Two-step with unsubscription form (i.e. an email with confirmation link will be sent)')
+    };
+
+    options[lists.UnsubscriptionMode.MANUAL] = {
+        value: lists.UnsubscriptionMode.MANUAL,
+        selected: unsubscriptionMode === lists.UnsubscriptionMode.MANUAL,
+        label: _('Manual (i.e. unsubscription has to be performed by the list administrator)')
+    };
+
+    return options;
+}
 
 module.exports = router;
